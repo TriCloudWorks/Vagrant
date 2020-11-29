@@ -1,0 +1,50 @@
+IMAGE_NAME = "ubuntu/xenial64"
+
+N = 1.  # value of N is number of worker nodes
+
+Vagrant.configure("2") do |config|
+    config.ssh.insert_key = false
+    config.vm.provider "virtualbox" do |v|
+        v.memory = 1024
+        v.cpus = 2
+    end
+
+    config.vm.define "k8s-master" do |master|
+        master.vm.box = IMAGE_NAME
+        master.vm.network "private_network", ip: "192.168.2.15"
+        master.vm.hostname = "k8s-master"
+        master.vm.provision "ansible" do |ansible|
+            ansible.playbook = "./ansible-master-playbook.yaml"
+            ansible.extra_vars = {
+                node_ip: "192.168.2.15",
+            }
+        end
+    end
+
+    (1..N).each do |i|
+        config.vm.define "k8s-node#{i}" do |node|
+#            node.vm.usable_port_range = 30000..39000
+            node.vm.box = IMAGE_NAME
+            node.vm.network "private_network", ip: "192.168.2.#{i + 2}"
+            node.vm.network "forwarded_port", guest: 30070, host: 30070
+            node.vm.network "forwarded_port", guest: 30080, host: 30080
+            node.vm.network "forwarded_port", guest: 30090, host: 30090
+            node.vm.network "forwarded_port", guest: 3306, host: 3306
+            node.vm.network "forwarded_port", guest: 5432, host: 5432
+            node.vm.network "forwarded_port", guest: 6379, host: 6379
+            node.vm.network "forwarded_port", guest: 3000, host: 3000
+            node.vm.network "forwarded_port", guest: 3001, host: 3001
+            node.vm.network "forwarded_port", guest: 8080, host: 8080
+            node.vm.network "forwarded_port", guest: 9080, host: 9080
+            node.vm.network "forwarded_port", guest: 8001, host: 8001
+            node.vm.network "forwarded_port", guest: 80, host: 80
+            node.vm.hostname = "k8s-node#{i}"
+            node.vm.provision "ansible" do |ansible|
+                ansible.playbook = "./ansible-node-playbook.yaml"
+                ansible.extra_vars = {
+                    node_ip: "192.168.2.#{i + 2}",
+                }
+            end
+        end
+    end
+end
