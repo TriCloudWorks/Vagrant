@@ -1,0 +1,118 @@
+- hosts: all
+  become: true
+  vars:
+    var_node: /home/vagrant
+    unzip_version: "6.0*"
+  tasks:
+
+### --- JAVA
+#  - name: Install Java 
+#    apt:
+#      name: "{{ packages }}"
+#      state: present
+#      update_cache: yes
+#    vars:
+#      packages:
+#      - openjdk-8-jdk
+#
+#  - name: Set JAVA_HOME env
+#    shell: echo "JAVA_HOME=/usr" | sudo tee -a /etc/environment
+      
+### --- NODEJS
+
+  - name: Node.js - Get script
+    get_url:
+      url: "http://deb.nodesource.com/setup_14.x"
+      dest: "{{ var_node }}/nodejs.sh"
+  
+  - name: Node.js - Set execution permission to script
+    file:
+      path: "{{ var_node }}/nodejs.sh"
+      mode: "u+x"
+  
+  - name: Node.js - Execute installation script
+    shell: "{{ var_node }}/nodejs.sh"
+  
+  - name: Node.js - Remove installation script
+    file:
+      path: "{{ var_node}}/nodejs.sh"
+      state: absent
+  
+  - name: Install build-essential
+    apt: name=build-essential state=present 
+
+  - name: Node.js - Install Node.js
+    apt: name=nodejs state=present update_cache=yes
+
+
+  - name: Install "angular@cli" npm package globally.
+    npm:
+      name: '@angular/cli'
+      global: yes
+
+
+### --- DOCKER
+
+  - name: Install packages that allow apt to be used over HTTPS
+    apt:
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg-agent
+      - software-properties-common
+
+  - name: Add an apt signing key for Docker
+    apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+      state: present
+
+  - name: Verify that we have the key with the fingerprint
+    remote_user: ubuntu
+    apt_key:
+      id: 0EBFCD88
+      state: present
+
+  - name: Add apt repository for stable version
+    apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
+      state: present
+      update_cache: yes
+
+  - name: Install docker and its dependecies
+    apt: 
+      name: "{{ packages }}"
+      state: present
+      update_cache: yes
+    vars:
+      packages:
+      - docker-ce 
+      - docker-ce-cli 
+      - containerd.io
+    notify:
+      - docker status
+
+  - name: Add vagrant user to docker group
+    user:
+      name: vagrant
+      group: docker
+
+  - name: Install docker-compose
+    remote_user: ubuntu
+    get_url: 
+      url: https://github.com/docker/compose/releases/download/1.26.0/docker-compose-Linux-x86_64
+###      url: curl -L https://github.com/docker/compose/releases/download/1.18.0/docker-compose-Linux-x86_64
+###      url : https://github.com/docker/compose/releases/download/1.25.1-rc1/docker-compose-Linux-x86_64
+      dest: /usr/local/bin/docker-compose
+      mode: 'u+x,g+x'
+
+  - name: Create a symbolic link to /usr/bin
+    command: ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+  handlers:
+    - name: docker status
+      service: name=docker state=started
