@@ -6,11 +6,11 @@ Before that,
 # Download Vagrant
 These are the available downloads for the **latest version of Vagrant**. Please download the proper package for your operating system and architecture.
 
-[link text](https://www.vagrantup.com/downloads)
+[Install Vagrant](https://www.vagrantup.com/downloads)
 
 # Install Virtual Box
 
-[link text](https://www.virtualbox.org/wiki/Downloads)
+[Install VirtualBox](https://www.virtualbox.org/wiki/Downloads)
 
 
 
@@ -30,6 +30,6 @@ Alternatively,
 # Download Vagrant VMware Utility
 These are the available downloads for the **latest version of Vagrant VMware Utility**. Please download the proper package for your operating system and architecture.
 
-[link text](https://www.vagrantup.com/vmware/downloads)
+[Install VMware](https://www.vagrantup.com/vmware/downloads)
 
 
