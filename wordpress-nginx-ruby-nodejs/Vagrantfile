@@ -1,0 +1,27 @@
+### --- Vagrantfile
+
+IMAGE_NAME = "ubuntu/xenial64"
+
+Vagrant.configure("2") do |config|
+    config.ssh.insert_key = false
+    config.vm.network "forwarded_port", guest:3000, host:3000
+    config.vm.network "forwarded_port", guest:3306, host:3306
+    config.vm.network "forwarded_port", guest:80, host:4555
+    config.vm.network "forwarded_port", guest:8080, host:4567
+    config.vm.provider "virtualbox" do |v|
+        v.memory = 1024
+        v.cpus = 2
+    end
+
+    config.vm.define "wordpressbox" do |master|
+        master.vm.box = IMAGE_NAME
+        master.vm.network "private_network", ip: "192.168.2.50"
+        master.vm.hostname = "wordpresshost"
+        master.vm.provision "ansible" do |ansible|
+            ansible.playbook = "./ansible-php-mysql-nodejs-docker.yml"
+            ansible.extra_vars = {
+                node_ip: "192.168.2.50",
+            }
+        end
+    end
+end
